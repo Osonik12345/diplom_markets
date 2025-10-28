@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Удалить рынок</h2>
+<form method="POST">
+    <input type="text" name="market_name" placeholder="Название рынка для удаления" required><br>
+    <button type="submit" class="btn red">🗑️ Удалить</button>
+</form>
+{% endblock %}

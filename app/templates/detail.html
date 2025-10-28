@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Детали рынка</h2>
+<form method="GET">
+    <input type="text" name="name" placeholder="Название рынка" value="{{ name or '' }}" required>
+    <button type="submit" class="btn">🔍 Загрузить</button>
+    {% if market %}
+        <a href="{{ url_for('download_pdf', name=market.name) }}" class="btn blue" style="margin-left:10px;">
+            📄 Скачать PDF
+        </a>
+    {% endif %}
+</form>
+
+{% if market %}
+<pre>
+--- {{ market.name }} ---
+
+📍 Адрес: {{ market.address }}
+🌐 Координаты: {{ market.coords }}
+{% if market.location %}📍 Местоположение: {{ market.location }}{% endif %}
+
+{% if market.products %}
+🍎 Продукты:
+{% for p in market.products %} • {{ p }}{% endfor %}
+{% endif %}
+
+{% if market.payments %}
+💳 Способы оплаты:
+{% for p in market.payments %} • {{ p }}{% endfor %}
+{% endif %}
+
+{% if market.socials %}
+🌐 Социальные сети:
+{% for s in market.socials %} • {{ s.name }}: {{ s.url }}{% endfor %}
+{% endif %}
+
+{% if market.reviews %}
+💬 Отзывы ({{ market.reviews|length }}):
+{% for r in market.reviews %}
+[{{ r.user }}] {{ r.stars }} ({{ r.date }})
+{% if r.text %}   "{{ r.text }}"{% endif %}
+{% endfor %}
+{% else %}
+📝 Отзывов пока нет.
+{% endif %}
+</pre>
+{% endif %}
+{% endblock %}

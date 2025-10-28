@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Редактировать рынок{% endblock %}
+{% block content %}
+<h2>Редактировать фермерский рынок</h2>
+
+<form method="GET">
+    <input type="text" name="name" placeholder="Название рынка для редактирования" value="{{ request.args.get('name', '') }}" required>
+    <button type="submit" class="btn">🔍 Загрузить</button>
+</form>
+
+{% if market %}
+<div class="message info" style="background:#e8f5e9; color:#1b5e20; margin: 15px 0;">
+    📝 Редактируется рынок: <strong>{{ market.market_name }}</strong> (название изменить нельзя)
+</div>
+
+<form method="POST">
+    <input type="hidden" name="market_id" value="{{ market.market_id }}">
+    <input type="hidden" name="original_name" value="{{ market.market_name }}">
+
+    <label>Улица *</label>
+    <input type="text" name="street" value="{{ market.street }}" required>
+
+    <label>Город *</label>
+    <input type="text" name="city" value="{{ market.city }}" required>
+
+    <label>Субъект *</label>
+    <input type="text" name="state" value="{{ market.state }}" required>
+
+    <label>Индекс *</label>
+    <input type="text" name="zip" value="{{ market.zip }}" required>
+
+    <label>Долгота (x)</label>
+    <input type="number" step="any" name="x" value="{{ market.x if market.x is not none else '' }}">
+
+    <label>Широта (y)</label>
+    <input type="number" step="any" name="y" value="{{ market.y if market.y is not none else '' }}">
+
+    <label>Описание местоположения</label>
+    <textarea name="location">{{ market.location }}</textarea>
+
+    <h3>Товары</h3>
+    {% for p in products %}
+        <label>
+            <input type="checkbox" name="products" value="{{ p.product_id }}"
+                {% if p.product_id in market.selected_products %}checked{% endif %}>
+            {{ p.product_name }}
+        </label>
+    {% endfor %}
+
+    <h3>Способы оплаты</h3>
+    {% for p in payments %}
+        <label>
+            <input type="checkbox" name="payments" value="{{ p.payment_id }}"
+                {% if p.payment_id in market.selected_payments %}checked{% endif %}>
+            {{ p.payment_name }}
+        </label>
+    {% endfor %}
+
+    <h3>Социальные сети</h3>
+    {% for sn in social_networks %}
+        <div style="margin-bottom: 8px;">
+            <label>
+                <input type="checkbox" name="social_networks" value="{{ sn.social_network_id }}"
+                    {% if sn.social_network_id in market.social_links %}checked{% endif %}>
+                {{ sn.social_networks }}
+            </label>
+            <input type="text" name="social_urls"
+                value="{{ market.social_links.get(sn.social_network_id, '') }}"
+                placeholder="URL профиля"
+                style="margin-left: 10px; width: 250px;">
+        </div>
+    {% endfor %}
+
+    <button type="submit" class="btn green">💾 Сохранить изменения</button>
+    <a href="{{ url_for('markets') }}" class="btn">← Отмена</a>
+</form>
+{% endif %}
+{% endblock %}

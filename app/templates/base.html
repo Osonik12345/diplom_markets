@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Фермерские рынки{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🌾 Фермерские рынки</h1>
+
+        {% if session.authenticated %}
+        <nav>
+            <a href="{{ url_for('markets') }}" {% if request.endpoint == 'markets' %}class="active"{% endif %}>Список рынков</a>
+            <a href="{{ url_for('search_page') }}" {% if request.endpoint == 'search_page' %}class="active"{% endif %}>Поиск</a>
+            <a href="{{ url_for('detail_page') }}" {% if request.endpoint == 'detail_page' %}class="active"{% endif %}>Детали</a>
+            <a href="{{ url_for('feedback_page') }}" {% if request.endpoint == 'feedback_page' %}class="active"{% endif %}>Отзыв</a>
+            <a href="{{ url_for('add_market') }}" {% if request.endpoint == 'add_market' %}class="active"{% endif %}>Добавить</a>
+            <a href="{{ url_for('edit_market') }}" {% if request.endpoint == 'edit_market' %}class="active"{% endif %}>Редактировать</a>
+            <a href="{{ url_for('import_markets') }}" {% if request.endpoint == 'import_markets' %}class="active"{% endif %}>Импорт</a>
+            <a href="{{ url_for('stats') }}" {% if request.endpoint == 'stats' %}class="active"{% endif %}>Статистика</a>
+            <a href="{{ url_for('help_page') }}" {% if request.endpoint == 'help' %}class="active"{% endif %}>Справка</a>
+            <a href="{{ url_for('delete_page') }}" {% if request.endpoint == 'delete_page' %}class="active"{% endif %}>Удалить</a>
+        </nav>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

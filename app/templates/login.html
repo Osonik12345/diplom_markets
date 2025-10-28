@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>🔐 Вход</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Вход в систему управления рынками</h1>
+        <form method="POST">
+            <label>Логин:</label>
+            <input type="text" name="username" required>
+            <label>Пароль:</label>
+            <input type="password" name="password" required>
+            <button type="submit" class="btn green">Войти</button>
+        </form>
+    </div>
+</body>
+</html>

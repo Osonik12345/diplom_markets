@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Поиск</h2>
+
+<form method="GET">
+    <label><strong>Тип поиска:</strong></label><br>
+    <div class="radio-group">
+        <label><input type="radio" name="mode" value="city" {% if mode=='city' %}checked{% endif %}> Город</label><br>
+        <label><input type="radio" name="mode" value="state" {% if mode=='state' %}checked{% endif %}> Субъект</label><br>
+        <label><input type="radio" name="mode" value="zip" {% if mode=='zip' %}checked{% endif %}> Индекс</label><br>
+    </div>
+
+    <br>
+    <label><input type="checkbox" name="radius" value="1" {% if radius %}checked{% endif %}> По радиусу (если выбрано — заполните поля ниже)</label><br>
+
+    <div class="radius-fields">
+        <label>Широта (y):</label>
+        <input type="number" step="any" name="lat" value="{{ lat or '' }}" placeholder="например, 42.3601"><br>
+        <label>Долгота (x):</label>
+        <input type="number" step="any" name="lon" value="{{ lon or '' }}" placeholder="например, -71.0589"><br>
+        <label>Радиус (мили):</label>
+        <input type="number" step="any" name="radius_val" value="{{ radius_val or '' }}" placeholder="например, 10"><br>
+    </div>
+
+    <br>
+    <label><strong>Поиск по значению:</strong></label><br>
+    <input type="text" name="q" value="{{ q or '' }}" placeholder="Введите город, субъект или индекс"><br>
+
+    <br>
+    <label><strong>Сортировка:</strong></label><br>
+    <div class="radio-group">
+        <label><input type="radio" name="sort" value="0" {% if sort=='0' %}checked{% endif %}> Без сортировки</label><br>
+        <label><input type="radio" name="sort" value="1" {% if sort=='1' %}checked{% endif %}> По названию ↑</label><br>
+        <label><input type="radio" name="sort" value="2" {% if sort=='2' %}checked{% endif %}> По названию ↓</label><br>
+        <label><input type="radio" name="sort" value="3" {% if sort=='3' %}checked{% endif %}> По рейтингу ↓</label><br>
+    </div>
+
+    <br>
+    <button type="submit" class="btn blue">🔍 Найти</button>
+</form>
+
+{% if results %}
+    <h3>Результаты ({{ results|length }}):</h3>
+    <ul>
+    {% for m in results %}
+        <li>
+            {{ m.name }} | {{ m.city }}, {{ m.state }}
+            {% if m.distance is defined %} | {{ m.distance }} миль{% endif %}
+            {% if m.rating is defined %} | ★{{ "%.1f"|format(m.rating) }}{% endif %}
+            <br>
+            <a href="{{ url_for('detail_page', name=m.name) }}">Показать детали</a>
+        </li>
+    {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}

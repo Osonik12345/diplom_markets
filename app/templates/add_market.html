@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Добавить рынок{% endblock %}
+{% block content %}
+<h2>Добавить новый фермерский рынок</h2>
+
+<form method="POST">
+    <label>Название рынка *</label>
+    <input type="text" name="market_name" required>
+
+    <label>Улица *</label>
+    <input type="text" name="street" required>
+
+    <label>Город *</label>
+    <input type="text" name="city" required>
+
+    <label>Субъект *</label>
+    <input type="text" name="state" required>
+
+    <label>Индекс *</label>
+    <input type="text" name="zip" required>
+
+    <label>Долгота (x)</label>
+    <input type="number" step="any" name="x" placeholder="например, -73.994454">
+
+    <label>Широта (y)</label>
+    <input type="number" step="any" name="y" placeholder="например, 40.750042">
+
+    <label>Описание местоположения</label>
+    <textarea name="location" placeholder="Дополнительное описание (необязательно)"></textarea>
+
+    <h3>Товары</h3>
+    {% for p in products %}
+        <label>
+            <input type="checkbox" name="products" value="{{ p.product_id }}">
+            {{ p.product_name }}
+        </label>
+    {% else %}
+        <p>Нет доступных товаров.</p>
+    {% endfor %}
+
+    <h3>Способы оплаты</h3>
+    {% for p in payments %}
+        <label>
+            <input type="checkbox" name="payments" value="{{ p.payment_id }}">
+            {{ p.payment_name }}
+        </label>
+    {% else %}
+        <p>Нет способов оплаты.</p>
+    {% endfor %}
+
+    <h3>Социальные сети</h3>
+    {% for sn in social_networks %}
+        <div style="margin-bottom: 8px;">
+            <label>
+                <input type="checkbox" name="social_networks" value="{{ sn.social_network_id }}">
+                {{ sn.social_networks }}
+            </label>
+            <input type="text" name="social_urls" placeholder="URL профиля (если есть)" style="margin-left: 10px; width: 250px;">
+        </div>
+    {% else %}
+        <p>Нет социальных сетей.</p>
+    {% endfor %}
+
+    <button type="submit" class="btn green">✅ Добавить рынок</button>
+    <a href="{{ url_for('markets') }}" class="btn">← Отмена</a>
+</form>
+{% endblock %}

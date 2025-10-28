@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Статистика{% endblock %}
+{% block content %}
+<h2>📊 Статистика по фермерским рынкам</h2>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 25px;">
+    <div style="background: #f0f8f0; padding: 15px; border-radius: 6px; min-width: 180px;">
+        <h3 style="margin: 0; color: #2c6f00;">{{ stats.total_markets }}</h3>
+        <p style="margin: 5px 0 0; color: #555;">Всего рынков</p>
+    </div>
+    <div style="background: #f0f8f0; padding: 15px; border-radius: 6px; min-width: 180px;">
+        <h3 style="margin: 0; color: #2c6f00;">{{ stats.total_reviews }}</h3>
+        <p style="margin: 5px 0 0; color: #555;">Всего отзывов</p>
+    </div>
+    <div style="background: #f0f8f0; padding: 15px; border-radius: 6px; min-width: 180px;">
+        <h3 style="margin: 0; color: #2c6f00;">{{ "%.2f"|format(stats.avg_rating) }}</h3>
+        <p style="margin: 5px 0 0; color: #555;">Средний рейтинг</p>
+    </div>
+    <div style="background: #f0f8f0; padding: 15px; border-radius: 6px; min-width: 180px;">
+        <h3 style="margin: 0; color: #2c6f00;">{{ stats.total_products }}</h3>
+        <p style="margin: 5px 0 0; color: #555;">Продуктов</p>
+    </div>
+    <div style="background: #f0f8f0; padding: 15px; border-radius: 6px; min-width: 180px;">
+        <h3 style="margin: 0; color: #2c6f00;">{{ stats.total_payments }}</h3>
+        <p style="margin: 5px 0 0; color: #555;">Способов оплаты</p>
+    </div>
+    <div style="background: #f0f8f0; padding: 15px; border-radius: 6px; min-width: 180px;">
+        <h3 style="margin: 0; color: #2c6f00;">{{ stats.total_socials }}</h3>
+        <p style="margin: 5px 0 0; color: #555;">Соцсетей</p>
+    </div>
+</div>
+
+<h3>🏆 Топ-5 рынков по рейтингу</h3>
+{% if stats.top_markets %}
+<table>
+    <thead>
+        <tr>
+            <th>Название</th>
+            <th>Город</th>
+            <th>Субъект</th>
+            <th>Рейтинг</th>
+            <th>Отзывов</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in stats.top_markets %}
+        <tr>
+            <td>{{ m.market_name }}</td>
+            <td>{{ m.city }}</td>
+            <td>{{ m.state }}</td>
+            <td>★ {{ "%.2f"|format(m.avg_rating) }}</td>
+            <td>{{ m.review_count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Нет рынков с отзывами.</p>
+{% endif %}
+
+<h3>📍 Рынки по субъектам (топ-10)</h3>
+{% if stats.markets_by_state %}
+<table>
+    <thead>
+        <tr>
+            <th>Субъект</th>
+            <th>Количество рынков</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in stats.markets_by_state %}
+        <tr>
+            <td>{{ s.state or "—"}} </td>
+            <td>{{ s.count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Нет данных.</p>
+{% endif %}
+
+<a href="{{ url_for('markets') }}" class="btn">← Назад к списку</a>
+{% endblock %}

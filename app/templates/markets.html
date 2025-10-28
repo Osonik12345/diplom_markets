@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Список рынков</h2>
+
+<div style="margin-bottom: 15px;">
+    <a href="{{ url_for('export_all') }}" class="btn blue">📥 Экспорт всех рынков (Excel)</a>
+</div>
+
+<table>
+    <thead>
+        <tr><th>Название</th><th>Город</th><th>Субъект</th><th>Рейтинг</th><th>Отзывов</th></tr>
+    </thead>
+    <tbody>
+        {% for m in markets %}
+        <tr>
+            <td>{{ m.name }}</td>
+            <td>{{ m.city }}</td>
+            <td>{{ m.state }}</td>
+            <td>{{ m.stars_display }}</td>
+            <td>{{ m.reviews }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination-controls">
+  {% if current_page > 1 %}
+    <a href="{{ url_for('markets', page=1) }}" class="btn">Первая</a>
+    <a href="{{ url_for('markets', page=current_page - 1) }}" class="btn">← Предыдущая</a>
+  {% endif %}
+
+  <span>Страница</span>
+  <form method="get" class="page-form">
+    <input
+      type="number"
+      name="page"
+      min="1"
+      max="{{ total_pages }}"
+      value="{{ current_page }}"
+      required
+      style="width: 80px; display: inline-block;"
+    >
+    <button type="submit" class="btn green" style="margin: 0 0 0 5px;">Перейти</button>
+  </form>
+  <span>из {{ total_pages }}</span>
+
+  {% if current_page < total_pages %}
+    <a href="{{ url_for('markets', page=current_page + 1) }}" class="btn">Следующая →</a>
+    <a href="{{ url_for('markets', page=total_pages) }}" class="btn">Последняя</a>
+  {% endif %}
+</div>
+{% endblock %}

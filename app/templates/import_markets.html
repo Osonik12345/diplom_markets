@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Импорт рынков из Excel{% endblock %}
+{% block content %}
+<h2>Импорт фермерских рынков из Excel</h2>
+
+<div class="message info" style="background:#e3f2fd; color:#0d47a1;">
+    📥 Загрузите Excel-файл с данными о рынках.<br>
+    Обязательные колонки: <code>market_name, street, city, state, zip</code>.<br>
+    <a href="{{ url_for('download_template') }}" class="btn blue" style="display:inline-block; margin-top:8px;">⬇️ Скачать шаблон</a>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+    <label>Выберите файл Excel (.xlsx):</label>
+    <input type="file" name="excel_file" accept=".xlsx" required>
+    <button type="submit" class="btn green">📤 Загрузить и импортировать</button>
+    <a href="{{ url_for('markets') }}" class="btn">← Отмена</a>
+</form>
+
+<h3>Формат колонок:</h3>
+<ul>
+    <li><strong>market_name</strong> — название рынка</li>
+    <li><strong>street, city, state, zip</strong> — адрес (обязательно)</li>
+    <li><strong>x, y</strong> — координаты (долгота, широта)</li>
+    <li><strong>location</strong> — описание местоположения</li>
+    <li><strong>products</strong> — через запятую: <code>Овощи, Мёд</code></li>
+    <li><strong>payments</strong> — через запятую: <code>Наличные, Карта</code></li>
+    <li><strong>socials</strong> — через запятую в формате: <code>Instagram:https://..., ВКонтакте:</code></li>
+</ul>
+
+<p>⚠️ Названия продуктов, оплаты и соцсетей должны точно совпадать с теми, что есть в базе.</p>
+{% endblock %}

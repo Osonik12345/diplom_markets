@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Отправить отзыв</h2>
+<form method="POST">
+    <input type="text" name="market_name" placeholder="Название рынка" required><br>
+    <input type="text" name="user_name" placeholder="Ваше имя" required><br>
+    <input type="number" name="rating" min="1" max="5" placeholder="Рейтинг (1-5)" required><br>
+    <textarea name="review_text" placeholder="Текст отзыва"></textarea><br>
+    <button type="submit" class="btn green">📤 Отправить отзыв</button>
+</form>
+{% endblock %}
