@@ -25,7 +25,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 60
-      start_period: 120s  # даём 2 минуты на инициализацию (для больших данных)
+      start_period: 120s
 
   minio:
     image: minio/minio:latest
@@ -38,7 +38,7 @@ services:
       - ./minio-data:/data
     ports:
       - "9000:9000"
-      - "9001:9001"  # Console UI
+      - "9001:9001"
     command: server /data --console-address ":9001"
     networks:
       - russian-markets-net
@@ -51,7 +51,7 @@ services:
     restart: unless-stopped
     depends_on:
       postgres:
-        condition: service_healthy  # ← теперь ждёт именно готовности MV
+        condition: service_healthy
       minio:
         condition: service_started
     environment:
