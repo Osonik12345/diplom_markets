@@ -3,16 +3,16 @@ My diplom work in ITMO
 
 Перед запуском приложения необходимо в папку init положить дамп базы данных и sql запрос на создание материализованного представления. Необходимо установить Docker Desktop.
 Затем необходимо создать файл .env:
-# --- PostgreSQL ---
+PostgreSQL
 POSTGRES_DB=введите_свои_данные
 POSTGRES_USER=введите_свои_данные
 POSTGRES_PASSWORD=введите_свои_данные
 
-# --- MinIO ---
+MinIO
 MINIO_ROOT_USER=введите_свои_данные
 MINIO_ROOT_PASSWORD=введите_свои_данные
 
-# --- Flask App ---
+Flask App
 DB_HOST=введите_свои_данные
 DB_NAME=введите_свои_данные
 DB_USER=введите_свои_данные
@@ -22,6 +22,8 @@ MINIO_ENDPOINT=введите_свои_данные
 MINIO_ACCESS_KEY=введите_свои_данные
 MINIO_SECRET_KEY=введите_свои_данные
 FLASK_SECRET_KEY=введите_свои_данные
+
+Если необходимо, то можно изменить порты, на которых будут открыты соответствующие приложения. Это нужно сделать в файлах dockerfile и docker-compose
 
 После этого находясь в корне проекта выполните команду docker-compose up --build
 
