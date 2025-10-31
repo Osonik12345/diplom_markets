@@ -138,13 +138,14 @@ def login():
 
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT id, username, password_hash FROM users WHERE username = %s", (username,))
+                cur.execute("SELECT id, username, password_hash, is_admin FROM users WHERE username = %s", (username,))
                 user = cur.fetchone()
 
                 if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
                     session['authenticated'] = True
                     session['user_id'] = user['id']
                     session['username'] = user['username']
+                    session['is_admin'] = bool(user.get('is_admin', False))
                     return redirect(url_for('markets'))
                 else:
                     flash("Неверный логин или пароль", "error")
@@ -158,6 +159,16 @@ def require_auth(f):
         if not session.get('authenticated'):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
+    wrapper.__name__ = f.__name__
+    return wrapper
+
+def require_admin(f):
+    def wrapper(*args, **kwargs):
+        if not session.get('authenticated'):
+            return redirect(url_for('login'))
+        if not session.get('is_admin', False):
+            flash("Доступ запрещён: требуется права администратора", "error")
+            return redirect(url_for('markets'))  # или другая страница
     wrapper.__name__ = f.__name__
     return wrapper
 
@@ -437,7 +448,7 @@ def feedback_page():
     return render_template('feedback.html')
 
 @app.route('/delete', methods=['GET', 'POST'])
-@require_auth
+@require_admin
 def delete_page():
     if request.method == 'POST':
         market_name = request.form.get('market_name', '').strip()
@@ -462,7 +473,7 @@ def delete_page():
     return render_template('delete.html')
 
 @app.route('/add_market', methods=['GET', 'POST'])
-@require_auth
+@require_admin
 def add_market():
     if request.method == 'GET':
         conn = get_db_connection()
@@ -558,7 +569,7 @@ def add_market():
         conn.close()
 
 @app.route('/import_markets', methods=['GET', 'POST'])
-@require_auth
+@require_admin
 def import_markets():
     if request.method == 'GET':
         return render_template('import_markets.html')
@@ -717,7 +728,7 @@ def download_template():
     return send_file(tmp_path, as_attachment=True, download_name="шаблон_рынков.xlsx")
 
 @app.route('/edit_market', methods=['GET', 'POST'])
-@require_auth
+@require_admin
 def edit_market():
     conn = get_db_connection()
     if not conn:
@@ -1204,6 +1215,61 @@ def stats():
 @require_auth
 def help_page():
     return render_template('help.html')
+
+@app.route('/add_user', methods=['GET', 'POST'])
+@require_auth
+def add_user():
+    # Только администратор может добавлять пользователей
+    if not session.get('is_admin', False):
+        flash("Доступ запрещён: требуется права администратора", "error")
+        return redirect(url_for('markets'))
+
+    if request.method == 'GET':
+        return render_template('add_user.html')
+
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '').strip()
+    confirm_password = request.form.get('confirm_password', '').strip()
+    is_admin_flag = bool(request.form.get('is_admin'))
+
+    if not username or not password:
+        flash("Имя пользователя и пароль обязательны", "error")
+        return render_template('add_user.html')
+
+    if password != confirm_password:
+        flash("Пароли не совпадают", "error")
+        return render_template('add_user.html')
+
+    # Хешируем пароль
+    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    conn = get_db_connection()
+    if not conn:
+        flash("Ошибка подключения к БД", "error")
+        return render_template('add_user.html')
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO users (username, password_hash, is_admin)
+                VALUES (%s, %s, %s)
+            """, (username, hashed, is_admin_flag))
+            conn.commit()
+        flash(f"✅ Пользователь '{username}' успешно создан!", "success")
+        return redirect(url_for('markets'))
+    except psycopg2.IntegrityError as e:
+        conn.rollback()
+        if "unique_violation" in str(e):
+            flash("Пользователь с таким именем уже существует", "error")
+        else:
+            flash(f"Ошибка базы данных: {e}", "error")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Неизвестная ошибка: {e}", "error")
+    finally:
+        conn.close()
+
+    return render_template('add_user.html')
 
 if __name__ == '__main__':
     app.run(debug=False)

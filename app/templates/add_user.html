@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить пользователя{% endblock %}
+
+{% block content %}
+<h2>Добавить нового пользователя</h2>
+
+<form method="POST">
+    <label for="username">Имя пользователя:</label>
+    <input type="text" id="username" name="username" required>
+
+    <label for="password">Пароль:</label>
+    <input type="password" id="password" name="password" required>
+
+    <label for="confirm_password">Подтвердите пароль:</label>
+    <input type="password" id="confirm_password" name="confirm_password" required>
+
+    <div style="margin: 15px 0;">
+        <label>
+            <input type="checkbox" name="is_admin" value="1">
+            Администратор
+        </label>
+    </div>
+
+    <button type="submit" class="btn green">Создать</button>
+    <a href="{{ url_for('markets') }}" class="btn blue">← Назад</a>
+</form>
+{% endblock %}
