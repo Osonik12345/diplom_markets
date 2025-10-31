@@ -1,7 +1,6 @@
 .env
 data/*
 !data/.gitkeep
-init/*
 !init/.gitkeep
 minio-data/*
 !minio-data/.gitkeep
