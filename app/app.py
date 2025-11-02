@@ -248,7 +248,9 @@ def search_page():
     results = []
     if request.args:
         conn = get_db_connection()
-        if conn:
+        if not conn:
+            flash("Ошибка подключения к БД", "error")
+        else:
             try:
                 with conn.cursor() as cur:
                     if radius:
@@ -1092,12 +1094,13 @@ def download_pdf():
 def export_all():
     user_ip = request.environ.get('HTTP_X_REAL_IP') or request.remote_addr
     operation_type = 'export'
+    tmp_path = None
 
-    engine = create_engine(
-        f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    )
 
     try:
+        engine = create_engine(
+            f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        )
         with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
             tmp_path = tmp.name
 
@@ -1132,10 +1135,11 @@ def export_all():
         flash(f"Ошибка экспорта: {e}", "error")
         return redirect(url_for('markets'))
     finally:
-        try:
-            os.unlink(tmp_path)
-        except:
-            pass
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except:
+                pass
 
 @app.route('/stats')
 @require_auth

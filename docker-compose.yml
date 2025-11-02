@@ -44,6 +44,7 @@ services:
       - russian-markets-net
 
   app:
+    image: osonik12345/russian-markets-app:latest
     build:
       context: ./app
       dockerfile: Dockerfile
