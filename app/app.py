@@ -1275,7 +1275,7 @@ def add_user():
 
 @app.route('/logout')
 def logout():
-    session.clear()  # или session.pop('authenticated', None) и т.д.
+    session.clear()
     flash("Вы успешно вышли из системы", "success")
     return redirect(url_for('login'))
 
