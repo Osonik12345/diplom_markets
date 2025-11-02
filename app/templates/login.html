@@ -8,6 +8,15 @@
 <body>
     <div class="container">
         <h1>Вход в систему управления рынками</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="message {{ category }}">{{ message|safe }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <form method="POST">
             <label>Логин:</label>
             <input type="text" name="username" required>

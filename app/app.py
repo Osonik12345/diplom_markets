@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for, flash, send_file
+from flask import Flask, render_template, request, session, redirect, url_for, flash, send_file, send_from_directory
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import math
@@ -168,7 +168,9 @@ def require_admin(f):
             return redirect(url_for('login'))
         if not session.get('is_admin', False):
             flash("Доступ запрещён: требуется права администратора", "error")
-            return redirect(url_for('markets'))  # или другая страница
+            return redirect(url_for('markets'))
+        # 👇 ЭТОГО НЕ ХВАТАЛО!
+        return f(*args, **kwargs)
     wrapper.__name__ = f.__name__
     return wrapper
 
@@ -1270,6 +1272,20 @@ def add_user():
         conn.close()
 
     return render_template('add_user.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()  # или session.pop('authenticated', None) и т.д.
+    flash("Вы успешно вышли из системы", "success")
+    return redirect(url_for('login'))
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon'
+    )
 
 if __name__ == '__main__':
     app.run(debug=False)

@@ -64,8 +64,9 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
-    ports:
-      - "5000:5000"
+    # ❌ Убираем проброс порта 5000 наружу — доступ только через NGINX
+    # ports:
+    #   - "5000:5000"
     networks:
       - russian-markets-net
     healthcheck:
@@ -73,6 +74,22 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  nginx:
+    image: nginx:alpine
+    container_name: russian-markets-nginx
+    restart: unless-stopped
+    ports:
+      - "443:443"
+      # Если в будущем захотите HTTP → HTTPS редирект — раскомментируйте:
+      # - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - russian-markets-net
 
 networks:
   russian-markets-net:
