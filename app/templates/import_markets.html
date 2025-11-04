@@ -3,6 +3,19 @@
 {% block content %}
 <h2>Импорт фермерских рынков из Excel</h2>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="message {{ 'error' if category == 'error' else 'success' }}"
+           style="padding:12px; margin:16px 0; border-radius:4px;
+                  background:{% if category == 'error' %}#ffebee{% else %}#e8f5e9{% endif %};
+                  color:{% if category == 'error' %}#c62828{% else %}#2e7d32{% endif %};">
+        {{ message|safe }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 <div class="message info" style="background:#e3f2fd; color:#0d47a1;">
     📥 Загрузите Excel-файл с данными о рынках.<br>
     Обязательные колонки: <code>market_name, street, city, state, zip</code>.<br>

@@ -23,6 +23,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import create_engine, text
 import xlsxwriter
 import bcrypt
+from psycopg2 import errors
 
 # Конфигурация MinIO
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "localhost:9000")
@@ -600,16 +601,16 @@ def import_markets():
 
         # Читаем Excel
         df = pd.read_excel(tmp_path, dtype=str).fillna('')
-        # После успешного импорта — сохраняем исходный файл в MinIO
-        save_file_to_minio_and_log(tmp_path, filename, operation_type, user_ip)
-        os.unlink(tmp_path)  # удаляем временный файл
-
         # Обязательные колонки
         required_cols = {'market_name', 'street', 'city', 'state', 'zip'}
         if not required_cols.issubset(df.columns):
             missing = required_cols - set(df.columns)
             flash(f"В файле отсутствуют обязательные колонки: {', '.join(missing)}", "error")
+            os.unlink(tmp_path)  # удаляем временный файл
             return redirect(url_for('import_markets'))
+        # После успешного импорта — сохраняем исходный файл в MinIO
+        save_file_to_minio_and_log(tmp_path, filename, operation_type, user_ip)
+        os.unlink(tmp_path)  # удаляем временный файл
 
         added = 0
         errors = []
@@ -1265,7 +1266,7 @@ def add_user():
         return redirect(url_for('markets'))
     except psycopg2.IntegrityError as e:
         conn.rollback()
-        if "unique_violation" in str(e):
+        if isinstance(e, errors.UniqueViolation):
             flash("Пользователь с таким именем уже существует", "error")
         else:
             flash(f"Ошибка базы данных: {e}", "error")
@@ -1279,8 +1280,11 @@ def add_user():
 
 @app.route('/logout')
 def logout():
-    session.clear()
     flash("Вы успешно вышли из системы", "success")
+    session.pop('authenticated', None)
+    session.pop('user_id', None)
+    session.pop('username', None)
+    session.pop('is_admin', None)
     return redirect(url_for('login'))
 
 @app.route('/favicon.ico')

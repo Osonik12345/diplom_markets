@@ -929,7 +929,6 @@ def test_import_markets_success(mock_get_db, mock_save_file):
 
 @patch('app.app.get_db_connection')
 def test_import_markets_missing_columns(mock_get_db):
-    """Отсутствуют обязательные колонки → ошибка"""
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
     mock_get_db.return_value = mock_conn
@@ -952,14 +951,15 @@ def test_import_markets_missing_columns(mock_get_db):
             sess['authenticated'] = True
             sess['is_admin'] = True
 
-        data = {
-            'excel_file': (file_data, 'bad.xlsx')
-        }
-        response = client.post('/import_markets', data=data, content_type='multipart/form-data')
-        assert response.status_code == 302
-        response2 = client.get('/import_markets')
-        assert 'обязательные колонки' in response2.get_data(as_text=True)
-
+        data = {'excel_file': (file_data, 'bad.xlsx')}
+        response = client.post(
+            '/import_markets',
+            data=data,
+            content_type='multipart/form-data',
+            follow_redirects=True  # ← автоматически следует за редиректом
+        )
+        assert response.status_code == 200
+        assert 'обязательные колонки' in response.get_data(as_text=True)
 def test_download_template_requires_auth():
     """Неавторизованный пользователь → редирект на /login"""
     with app.test_client() as client:
@@ -1380,3 +1380,196 @@ def test_stats_success(mock_get_db):
         assert '4.25' in html  # avg_rating
         assert 'Центральный рынок' in html
         assert 'Москва' in html and '40' in html  # markets_by_state
+
+def test_help_requires_auth():
+    """Неавторизованный пользователь → редирект на /login"""
+    with app.test_client() as client:
+        response = client.get('/help', follow_redirects=False)
+        assert response.status_code == 302
+        assert response.location.endswith('/')
+
+
+def test_help_success():
+    """Авторизованный пользователь → видит страницу помощи"""
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess['authenticated'] = True
+
+        response = client.get('/help')
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+        assert '<title>Справка — Инструкция для пользователей</title>' in html or 'Помощь' in html
+        # Можно также проверить наличие ключевых разделов, если они есть в шаблоне:
+        # assert 'Как добавить рынок?' in html
+        # assert 'Формат Excel' in html
+
+@patch('app.app.get_db_connection')
+def test_add_user_requires_auth(mock_get_db):
+    """Неавторизованный → редирект на /login"""
+    with app.test_client() as client:
+        response = client.get('/add_user', follow_redirects=False)
+        assert response.status_code == 302
+        assert response.location.endswith('/')
+
+
+def test_add_user_requires_admin():
+    """Обычный пользователь (не админ) → редирект на /markets"""
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess['authenticated'] = True
+            sess['is_admin'] = False  # ← не админ
+
+        response = client.get('/add_user', follow_redirects=False)
+        assert response.status_code == 302
+        assert response.location.endswith('/markets')
+
+
+@patch('app.app.get_db_connection')
+def test_add_user_get_form(mock_get_db):
+    """Админ → видит форму добавления пользователя"""
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess['authenticated'] = True
+            sess['is_admin'] = True
+
+        response = client.get('/add_user')
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+        assert 'Создание нового пользователя' in html or 'name="username"' in html
+
+
+@patch('app.app.get_db_connection')
+def test_add_user_missing_fields(mock_get_db):
+    """Пустые имя или пароль → ошибка"""
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess['authenticated'] = True
+            sess['is_admin'] = True
+
+        response = client.post('/add_user', data={
+            'username': '',
+            'password': '123',
+            'confirm_password': '123'
+        })
+        assert response.status_code == 200
+        assert 'Имя пользователя и пароль обязательны' in response.get_data(as_text=True)
+
+
+@patch('app.app.get_db_connection')
+def test_add_user_password_mismatch(mock_get_db):
+    """Пароли не совпадают → ошибка"""
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess['authenticated'] = True
+            sess['is_admin'] = True
+
+        response = client.post('/add_user', data={
+            'username': 'newuser',
+            'password': 'pass1',
+            'confirm_password': 'pass2'
+        })
+        assert response.status_code == 200
+        assert 'Пароли не совпадают' in response.get_data(as_text=True)
+
+
+@patch('app.app.get_db_connection')
+def test_add_user_success(mock_get_db):
+    """Успешное создание пользователя"""
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_get_db.return_value = mock_conn
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess['authenticated'] = True
+            sess['is_admin'] = True
+
+        response = client.post('/add_user', data={
+            'username': 'newuser',
+            'password': 'secure123',
+            'confirm_password': 'secure123',
+            'is_admin': 'on'  # или отсутствует — зависит от чекбокса
+        })
+
+        assert response.status_code == 302
+        assert response.location.endswith('/markets')
+
+        # Проверяем, что пароль хеширован и INSERT вызван
+        insert_call = None
+        for call in mock_cursor.execute.call_args_list:
+            if 'INSERT INTO users' in call[0][0]:
+                insert_call = call
+                break
+        assert insert_call is not None
+        args = insert_call[0][1]  # (query, params)
+        username, password_hash, is_admin = args
+        assert username == 'newuser'
+        assert is_admin == True
+        # Проверяем, что пароль хеширован (не в открытом виде)
+        assert 'secure123' not in password_hash
+        assert bcrypt.checkpw('secure123'.encode('utf-8'), password_hash.encode('utf-8'))
+
+        mock_conn.commit.assert_called_once()
+
+
+@patch('app.app.get_db_connection')
+def test_add_user_duplicate_username(mock_get_db):
+    from psycopg2.errors import UniqueViolation
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_get_db.return_value = mock_conn
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+    mock_cursor.execute.side_effect = UniqueViolation('duplicate key value...')
+
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess['authenticated'] = True
+            sess['is_admin'] = True
+
+        response = client.post('/add_user', data={
+            'username': 'testuser',
+            'password': 'pass',
+            'confirm_password': 'pass'
+        })
+
+        assert response.status_code == 200
+        assert 'Пользователь с таким именем уже существует' in response.get_data(as_text=True)
+
+def test_logout_clears_auth_and_redirects():
+    """Проверка, что logout удаляет данные авторизации и показывает сообщение."""
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess['authenticated'] = True
+            sess['username'] = 'testuser'
+            sess['is_admin'] = False
+            sess['user_id'] = 123
+
+        response = client.get('/logout', follow_redirects=False)
+
+        assert response.status_code == 302
+        assert response.location.endswith('/')
+
+        # Проверяем сессию после logout
+        with client.session_transaction() as sess:
+            assert 'authenticated' not in sess
+            assert 'username' not in sess
+            assert 'user_id' not in sess
+            assert 'is_admin' not in sess
+            # Но flash-сообщение может быть в сессии — это нормально
+            assert '_flashes' in sess  # или можно не проверять это
+
+        # Проверяем, что сообщение отображается на странице входа
+        follow_response = client.get('/')
+        html = follow_response.get_data(as_text=True)
+        assert 'Вы успешно вышли из системы' in html
+
+def test_favicon_ico_exists():
+    """Проверка, что favicon.ico доступен и имеет правильный MIME-тип."""
+    with app.test_client() as client:
+        response = client.get('/favicon.ico')
+        assert response.status_code == 200
+        assert response.content_type == 'image/vnd.microsoft.icon'
+        # Дополнительно: убедимся, что тело ответа не пустое
+        assert len(response.data) > 0
